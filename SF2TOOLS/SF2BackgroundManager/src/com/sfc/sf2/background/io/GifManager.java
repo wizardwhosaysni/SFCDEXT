@@ -1,0 +1,175 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.sfc.sf2.background.io;
+
+import com.sfc.sf2.graphics.Tile;
+import com.sfc.sf2.graphics.layout.DefaultLayout;
+import com.sfc.sf2.background.Background;
+import com.sfc.sf2.background.layout.BackgroundLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+
+/**
+ *
+ * @author wiz
+ */
+public class GifManager {
+    
+    private static final String BASE_FILENAME = "backgroundXX.gif";
+    
+    public static Background[] importGif(String basepath){
+        System.out.println("com.sfc.sf2.background.io.GifManager.importGif() - Importing GIF files ...");
+        List<Background> backgrounds = new ArrayList();
+        try{
+            for(int i=0;i<256;i++){
+                String index = String.format("%02d", i);
+                String filePath = basepath + BASE_FILENAME.replace("XX.gif", index+".gif");
+                Tile[] tiles = loadGifFile(filePath);
+                if(tiles!=null){
+                    if(tiles.length==384){
+                       Background background = new Background();
+                       background.setIndex(i);
+                       System.arraycopy(tiles, 0, tiles, 0, tiles.length);                   
+                       background.setTiles(tiles);
+                       backgrounds.add(background);
+                       System.out.println("Created Background " + i + " with " + tiles.length + " tiles.");                       
+                    }else{
+                        System.out.println("Could not create Background " + i + " because of wrong length : tiles=" + tiles.length);
+                    }
+                }
+            }
+        }catch(Exception e){
+             System.err.println("com.sfc.sf2.background.io.GifManager.importGif() - Error while parsing graphics data : "+e);
+        }        
+        System.out.println("com.sfc.sf2.background.io.GifManager.importGif() - GIF files imported.");
+        return backgrounds.toArray(new Background[backgrounds.size()]);                
+    }
+    
+    
+    
+    public static Tile[] loadGifFile(String filepath) throws IOException{
+        Tile[] tiles = null;
+        try{
+            Path path = Paths.get(filepath);
+            if(path.toFile().exists()){
+                BufferedImage img = ImageIO.read(path.toFile());
+                ColorModel cm = img.getColorModel();
+                if(!(cm instanceof IndexColorModel)){
+                    System.out.println("GIF FORMAT ERROR : COLORS ARE NOT INDEXED AS EXPECTED.");
+                }else{
+                    IndexColorModel icm = (IndexColorModel) cm;
+                    Color[] palette = buildColors(icm);
+
+                    int imageWidth = img.getWidth();
+                    int imageHeight = img.getHeight();
+                    if(imageWidth%8!=0 || imageHeight%8!=0){
+                        System.out.println("GIF FORMAT WARNING : DIMENSIONS ARE NOT MULTIPLES OF 8. (8 pixels per tile)");
+                    }else{
+                        tiles = new Tile[(imageWidth/8)*(imageHeight/8)];
+                        int tileId = 0;
+                        for(int screenHalf=0;screenHalf<2;screenHalf++){
+                            for(int blockColumn=0;blockColumn<4;blockColumn++){
+                                for(int blockLine=0;blockLine<3;blockLine++){
+                                    for(int tileColumn=0;tileColumn<4;tileColumn++){
+                                        for(int tileLine=0;tileLine<4;tileLine++){
+                                            int x = (screenHalf*16+blockColumn*4+tileColumn)*8;
+                                            int y = (blockLine*4+tileLine)*8;
+                                            //System.out.println("Building tile from coordinates "+x+":"+y);
+                                            Tile tile = new Tile();
+                                            tile.setId(tileId);
+                                            tile.setPalette(palette);
+                                            for(int j=0;j<8;j++){
+                                                for(int i=0;i<8;i++){
+                                                    Color color = new Color(img.getRGB(x+i,y+j));
+                                                    for(int c=0;c<16;c++){
+                                                        if(color.equals(palette[c])){
+                                                            tile.setPixel(i, j, c);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            //System.out.println(tile);
+                                            tiles[tileId] = tile;   
+                                            tileId++;
+                                        }
+                                    }
+                                }
+                            }
+                        }                        
+
+                    }
+                }                
+            }
+        }catch(Exception e){
+             System.err.println("com.sfc.sf2.background.io.GifManager.importGif() - Error while parsing GIF data : "+e);
+             throw e;
+        }                
+        return tiles;                
+    }
+    
+    private static Color[] buildColors(IndexColorModel icm){
+        Color[] colors = new Color[16];
+        if(icm.getMapSize()>16){
+            System.out.println("com.sfc.sf2.background.io.GifManager.buildColors() - GIF FORMAT HAS MORE THAN 16 INDEXED COLORS : "+icm.getMapSize());
+        }
+        byte[] reds = new byte[icm.getMapSize()];
+        byte[] greens = new byte[icm.getMapSize()];
+        byte[] blues = new byte[icm.getMapSize()];
+        icm.getReds(reds);
+        icm.getGreens(greens);
+        icm.getBlues(blues);
+        for(int i=0;i<16;i++){
+            colors[i] = new Color((int)(reds[i]&0xff),(int)(greens[i]&0xff),(int)(blues[i]&0xff));
+        }
+        return colors;
+    }
+    
+    
+    public static void exportGif(Background[] backgrounds, String basepath){
+        try {
+            //System.out.println("com.sfc.sf2.background.io.GifManager.exportGif() - Exporting GIF files ...");
+            for(Background background : backgrounds){
+                String index = String.format("%02d", background.getIndex());
+                String filePath = basepath + System.getProperty("file.separator") + BASE_FILENAME.replace("XX.gif", index+".gif");
+                writeGifFile(background.getTiles(),filePath);                
+            }
+            //System.out.println("com.sfc.sf2.background.io.GifManager.exportGif() - GIF files exported.");
+        } catch (Exception ex) {
+            Logger.getLogger(GifManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+                
+    }    
+    
+    public static void writeGifFile(Tile[] tiles, String filepath){
+        try {
+            //System.out.println("com.sfc.sf2.background.io.GifManager.exportGif() - Exporting GIF file ...");
+            BufferedImage image = BackgroundLayout.buildImage(tiles, 32, true);
+            File outputfile = new File(filepath);
+            //System.out.println("File path : "+outputfile.getAbsolutePath());
+            ImageIO.write(image, "gif", outputfile);
+            System.out.println("GIF file exported : " + outputfile.getAbsolutePath());
+        } catch (Exception ex) {
+            Logger.getLogger(GifManager.class.getName()).log(Level.SEVERE, null, ex);
+        }       
+    }
+       
+    
+}
