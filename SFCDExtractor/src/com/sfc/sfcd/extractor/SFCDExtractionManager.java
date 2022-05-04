@@ -27,6 +27,7 @@ import com.sfc.sf2.mapsprite.io.SFCDBankManager;
 import com.sfc.sf2.palette.PaletteManager;
 import com.sfc.sf2.portrait.Portrait;
 import com.sfc.sf2.portrait.PortraitManager;
+import com.sfc.sf2.text.TextManager;
 import com.sfc.sf2.weaponsprite.WeaponSprite;
 import com.sfc.sf2.weaponsprite.WeaponSpriteManager;
 import java.awt.Color;
@@ -285,7 +286,7 @@ public class SFCDExtractionManager {
                     
                     
                     /* MAP TILESETS */
-                    try{
+                    /*try{
                         String mapFolderString = folderPath+"BANKD"+fileIndexString+File.separator+"map";
                         File mapFolder = new File(mapFolderString);
                         if (!mapFolder.exists()){
@@ -328,10 +329,10 @@ public class SFCDExtractionManager {
                     }catch(Exception e){
                         System.out.println("  Map Tileset exception : "+e.getMessage());
                     } 
-                    
+                    */
                     
                     /* MAP */
-                    try{
+                    /*try{
                         
                         paletteManager = new PaletteManager();
                         graphicsManager = new GraphicsManager();
@@ -415,7 +416,7 @@ public class SFCDExtractionManager {
                         mapBlockManager.setTiles(tileset);
                         mapBlockManager.setBlocks(map.getBlocks());
                         mapBlockManager.exportSFCDBank(mapFolderString+File.separator+"0-blocks.bin");*/
-                        mapManager.exportSFCDBank(tileset,
+                        /*mapManager.exportSFCDBank(tileset,
                                                      mapFolderString+File.separator+"0-blocks.bin", 
                                                      mapFolderString+File.separator+"1-layout.bin", 
                                                      mapFolderString+File.separator+"2-areas.asm", 
@@ -445,7 +446,47 @@ public class SFCDExtractionManager {
                     }catch(Exception e){
                         e.printStackTrace();
                         System.out.println("  Maps exception : "+e.getMessage());
-                    }    
+                    }*/   
+                        
+                        
+
+                    
+                    //* TEXT */
+                    try{
+                        String textFolderString = folderPath+"BANKD"+fileIndexString+File.separator+"text";
+                        File textFolder = new File(textFolderString);
+                        if (!textFolder.exists()){
+                            textFolder.mkdirs();
+                        };
+                        int ptOffset = ((fileData[0x68+0]&0xFF)<<24) + ((fileData[0x68+1]&0xFF)<<16) + ((fileData[0x68+2]&0xFF)<<8) + ((fileData[0x68+3]&0xFF)) - 0x10000;
+                        int pointerByte1 = fileData[ptOffset+0]&0xFF;
+                        int pointerByte2 = fileData[ptOffset+1]&0xFF;
+                        int pointerByte3 = fileData[ptOffset+2]&0xFF;
+                        int pointerByte4 = fileData[ptOffset+3]&0xFF;
+                        int textBankPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x22E000 + ptOffset;
+                        pointerByte1 = fileData[ptOffset+0x40+0]&0xFF;
+                        pointerByte2 = fileData[ptOffset+0x40+1]&0xFF;
+                        pointerByte3 = fileData[ptOffset+0x40+2]&0xFF;
+                        pointerByte4 = fileData[ptOffset+0x40+3]&0xFF;
+                        int treeOffsetsPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x22E000 + ptOffset;
+                        pointerByte1 = fileData[ptOffset+0x4A+0]&0xFF;
+                        pointerByte2 = fileData[ptOffset+0x4A+1]&0xFF;
+                        pointerByte3 = fileData[ptOffset+0x4A+2]&0xFF;
+                        pointerByte4 = fileData[ptOffset+0x4A+3]&0xFF;
+                        int treeDataPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x22E000 + ptOffset;
+                        
+                        System.out.println("ptOffset=0x"+Integer.toHexString(ptOffset)
+                                +", treeOffsetsPointer=0x"+Integer.toHexString(treeOffsetsPointer)
+                                +", treeDataPointer=0x"+Integer.toHexString(treeDataPointer)
+                                +", textBankPointer=0x"+Integer.toHexString(textBankPointer));
+                        TextManager.importSFCDBank(filePath, ptOffset, treeOffsetsPointer, treeDataPointer, treeDataPointer, textBankPointer, ptOffset, 1024);
+                        TextManager.exportTxt(folderPath+"BANKD"+fileIndexString+File.separator+"text"+File.separator+"textbank.txt");
+                        
+                        System.out.println("  - Text extracted.");
+                    }catch(Exception e){
+                        System.out.println("  Text exception : "+e.getMessage());
+                        e.printStackTrace();
+                    }                        
                     
                     System.out.println("Extraction done : "+filePath);        
                 }

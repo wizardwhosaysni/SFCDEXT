@@ -10,6 +10,7 @@ import com.sfc.sf2.text.io.CustomManager;
 import com.sfc.sf2.text.io.TxtManager;
 import com.sfc.sf2.text.io.DisassemblyManager;
 import com.sfc.sf2.text.io.RomManager;
+import com.sfc.sf2.text.io.SFCDBankManager;
 import com.sfc.sf2.text.io.VWFontOptimizingManager;
 import com.sfc.sf2.vwfont.VWFontManager;
 
@@ -67,7 +68,13 @@ public class TextManager {
         System.out.println("com.sfc.sf2.text.TextManager.exportCustomRom() - Exporting Custom ROM ...");
         CustomManager.exportRom(TextManager.gamescript, customRomFilePath, huffmanTreeOffsetsOffset, huffmanTreesOffset, textbanksPointerOffset, textbanksOffset);
         System.out.println("com.sfc.sf2.text.TextManager.exportCustomRom() - Custom ROM exported.");        
-    }     
+    }  
+    
+    public static void importSFCDBank(String customRomFilePath, int ptOffset, int huffmanTreeOffsetsBegin, int huffmanTreeOffsetsEnd, int huffmanTreesOffsetsBegin, int huffmanTreesOffsetsEnd, int textbankOffset, int lastLineIndex){
+        System.out.println("com.sfc.sf2.text.TextManager.importSFCDBank() - Importing SFCD Bank ...");
+        TextManager.gamescript = SFCDBankManager.importSFCDBank(customRomFilePath, ptOffset, huffmanTreeOffsetsBegin, huffmanTreeOffsetsEnd, huffmanTreesOffsetsBegin, huffmanTreesOffsetsEnd, textbankOffset, lastLineIndex);
+        System.out.println("com.sfc.sf2.text.TextManager.importSFCDBank() - SFCD Bank imported.");
+    }   
     
     public static void importTxt(String filepath){
         System.out.println("com.sfc.sf2.text.TextManager.importTxt() - Importing TXT ...");

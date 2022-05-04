@@ -72,7 +72,12 @@ public class TextDecoder {
                 stringIndex = "0"+stringIndex;
             }
             System.out.println("$"+stringIndex+"("+lineLength+")="+s);
-            System.out.println(Arrays.toString(Arrays.copyOfRange(data,bankPointer+1,(bankPointer+data[bankPointer]+1))));
+            try{
+                System.out.println(Arrays.toString(Arrays.copyOfRange(data,bankPointer+1,(bankPointer+data[bankPointer]+1))));
+            }catch(Exception e){
+                textbankStrings = Arrays.copyOf(textbankStrings, i);
+                break;
+            }
             textbankStrings[i] = s;
             bankPointer += (data[bankPointer]&0xFF)+1;
             if(bankPointer+1>=data.length){
