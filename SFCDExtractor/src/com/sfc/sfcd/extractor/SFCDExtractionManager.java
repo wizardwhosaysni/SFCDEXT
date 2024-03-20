@@ -7,6 +7,9 @@ package com.sfc.sfcd.extractor;
 
 import com.sfc.sf2.background.Background;
 import com.sfc.sf2.background.BackgroundManager;
+import com.sfc.sf2.battle.BattleManager;
+import com.sfc.sf2.battle.SpriteSet;
+import com.sfc.sf2.battle.mapterrain.BattleMapTerrain;
 import com.sfc.sf2.battlesprite.BattleSprite;
 import com.sfc.sf2.battlesprite.BattleSpriteManager;
 import com.sfc.sf2.graphics.GraphicsManager;
@@ -451,7 +454,7 @@ public class SFCDExtractionManager {
                         
 
                     
-                    //* TEXT */
+                    /* TEXT
                     try{
                         String textFolderString = folderPath+"BANKD"+fileIndexString+File.separator+"text";
                         File textFolder = new File(textFolderString);
@@ -486,7 +489,56 @@ public class SFCDExtractionManager {
                     }catch(Exception e){
                         System.out.println("  Text exception : "+e.getMessage());
                         e.printStackTrace();
-                    }                        
+                    } */        
+                        
+                        
+
+                    
+                    /* BATTLE DATA */
+                    if(   (fileIndex>=0x1  && fileIndex<0x17)
+                        ||(fileIndex>=0x21 && fileIndex<0x39)
+                        ||(fileIndex>=0x41 && fileIndex<0x47)
+                        ||(fileIndex>=0x48 && fileIndex<0x49)){
+                        try{
+                            String battleFolderString = folderPath+"BANKD"+fileIndexString+File.separator+"battle";
+                            File battleFolder = new File(battleFolderString);
+                            if (!battleFolder.exists()){
+                                battleFolder.mkdirs();
+                            };
+                            int ptOffset = ((fileData[0x88+0]&0xFF)<<24) + ((fileData[0x88+1]&0xFF)<<16) + ((fileData[0x88+2]&0xFF)<<8) + ((fileData[0x88+3]&0xFF)) - 0x10000;
+                            int pointerByte1 = fileData[ptOffset+0]&0xFF;
+                            int pointerByte2 = fileData[ptOffset+1]&0xFF;
+                            int pointerByte3 = fileData[ptOffset+2]&0xFF;
+                            int pointerByte4 = fileData[ptOffset+3]&0xFF;
+                            int battleTerrainPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x236800 + ptOffset;
+                            pointerByte1 = fileData[ptOffset+4+0]&0xFF;
+                            pointerByte2 = fileData[ptOffset+4+1]&0xFF;
+                            pointerByte3 = fileData[ptOffset+4+2]&0xFF;
+                            pointerByte4 = fileData[ptOffset+4+3]&0xFF;
+                            int battleSpritesetPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x236800 + ptOffset;
+                            pointerByte1 = fileData[ptOffset+8+0]&0xFF;
+                            pointerByte2 = fileData[ptOffset+8+1]&0xFF;
+                            pointerByte3 = fileData[ptOffset+8+2]&0xFF;
+                            pointerByte4 = fileData[ptOffset+8+3]&0xFF;
+                            int battleSpritesetBisPointer = (pointerByte1<<24) + (pointerByte2<<16) + (pointerByte3<<8) + (pointerByte4) - 0x236800 + ptOffset;
+
+                            System.out.println("ptOffset=0x"+Integer.toHexString(ptOffset)
+                                    +", battleTerrainPointer=0x"+Integer.toHexString(battleTerrainPointer)
+                                    +", battleSpritesetPointer=0x"+Integer.toHexString(battleSpritesetPointer)
+                                    +", battleSpritesetBisPointer=0x"+Integer.toHexString(battleSpritesetBisPointer));
+                            /*
+                            SpriteSet spriteset = com.sfc.sf2.battle.io.SFCDBankManager.importSpriteset(filePath, battleSpritesetPointer);
+                            com.sfc.sf2.battle.io.SFCDBankManager.exportSpriteSet(spriteset, folderPath+"BANKD"+fileIndexString+File.separator+"battle"+File.separator+"spriteset.bin");
+                            */
+                            BattleMapTerrain terrain = com.sfc.sf2.battle.mapterrain.io.SFCDBankManager.importSFCDBank(filePath, battleTerrainPointer);
+                            com.sfc.sf2.battle.mapterrain.io.SFCDBankManager.exportDisassembly(terrain, folderPath+"BANKD"+fileIndexString+File.separator+"battle"+File.separator+"terrain.bin");
+
+                            System.out.println("  - Text extracted.");
+                        }catch(Exception e){
+                            System.out.println("  Text exception : "+e.getMessage());
+                            e.printStackTrace();
+                        }   
+                    }
                     
                     System.out.println("Extraction done : "+filePath);        
                 }

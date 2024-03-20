@@ -2,3 +2,5 @@
 /SF2TOOLS/SF2TextManager/build/
 /SF2TOOLS/SF2TextManager/dist/
 *.class
+/SFCDExtractor/nbproject/private/
+/SFCDExtractor/build/
